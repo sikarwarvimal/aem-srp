@@ -20,7 +20,7 @@ import org.apache.sling.api.resource.ValueMap
 @Service
 @CompileStatic
 @Component(immediate=true)
-public class CustomerRepositoryImpl extends SocialResourceProviderTemplate implements CustomerRepository {
+public class CustomerRepositoryImpl extends StorageResourceProviderTemplate implements CustomerRepository {
 
     final String CUSTOMERS_PATH = "${BASE_PATH}/ugc/srp/customers"
 
@@ -29,13 +29,36 @@ public class CustomerRepositoryImpl extends SocialResourceProviderTemplate imple
 
     @Override
     public CustomerEntity find(final String emailId) throws RepositoryException{
-        final CustomerEntity customerEntity = new CustomerEntity()
+        CustomerEntity customerEntity
         ResourceResolver resourceResolver = getResourceResolver(resourceResolverFactory)
         try {
             // Select logic
-            fetchCustomerEntity(customerEntity, resourceResolver, "${CUSTOMERS_PATH}/${emailId}")
+            customerEntity = fetchCustomerEntity(resourceResolver, "${CUSTOMERS_PATH}/${emailId}")
         } finally {
             resourceResolver.close()
+        }
+        return customerEntity
+    }
+
+    /**
+     *
+     * @param resourceResolver
+     * @param path
+     * @return
+     */
+    private CustomerEntity fetchCustomerEntity(final ResourceResolver resourceResolver, final String path) {
+        final Resource resource = getResource(resourceResolver, path)
+        CustomerEntity customerEntity = null
+        if(resource) {
+            final ValueMap valueMap = resource.valueMap
+            if (valueMap) {
+                customerEntity = new CustomerEntity()
+                customerEntity.populate(valueMap)
+            } else {
+                log.error("Unable to find Customer properties: ${path}")
+            }
+        } else {
+            log.error("Unable to find Customer: ${path}")
         }
         return customerEntity
     }
@@ -45,9 +68,12 @@ public class CustomerRepositoryImpl extends SocialResourceProviderTemplate imple
         ResourceResolver resourceResolver = getResourceResolver(resourceResolverFactory)
         try {
             try {
-                customerEntity.uuid = UUID.randomUUID().toString()
                 final String path = "${CUSTOMERS_PATH}/${customerEntity.email}"
-                final Resource resource = getResource(resourceResolver, path)
+                final SocialResourceProvider socialResourceProvider = getSocialResourceProvider(resourceResolver)
+                if(socialResourceProvider == null){
+                    throw new RepositoryException("Unable to Create Customer, SocialResourceProvider == null: ${path}")
+                }
+                final Resource resource = socialResourceProvider.getResource(resourceResolver, path)
                 if(resource) {
                     // Update Logic
                     final ModifiableValueMap valueMap = resource.adaptTo(ModifiableValueMap)
@@ -55,13 +81,8 @@ public class CustomerRepositoryImpl extends SocialResourceProviderTemplate imple
                     resourceResolver.commit()
                 } else {
                     // Create Logic
-                    final SocialResourceProvider socialResourceProvider = getSocialResourceProvider(resourceResolver)
-                    if(socialResourceProvider){
-                        socialResourceProvider.create(resourceResolver, path, customerEntity.create())
-                        resourceResolver.commit()
-                    } else {
-                        throw new RepositoryException("Unable to Create Customer, SocialResourceProvider == null: ${CUSTOMERS_PATH}/${customerEntity.email}")
-                    }
+                    socialResourceProvider.create(resourceResolver, path, customerEntity.create())
+                    resourceResolver.commit()
                 }
             }
             catch (PersistenceException e) {
@@ -91,26 +112,6 @@ public class CustomerRepositoryImpl extends SocialResourceProviderTemplate imple
             }
         } finally {
             resourceResolver.close()
-        }
-    }
-
-    /**
-     *
-     * @param customerEntity
-     * @param resourceResolver
-     * @param path
-     */
-    private void fetchCustomerEntity(final CustomerEntity customerEntity, final ResourceResolver resourceResolver, final String path) {
-        final Resource resource = getResource(resourceResolver, path)
-        if(resource) {
-            final ValueMap valueMap = resource.valueMap
-            if (valueMap) {
-                customerEntity.populate(valueMap)
-            } else {
-                log.error("Unable to find Customer properties: ${path}")
-            }
-        } else {
-            log.error("Unable to find Customer: ${path}")
         }
     }
 }

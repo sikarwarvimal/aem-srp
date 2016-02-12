@@ -20,12 +20,14 @@ class CustomerEntity {
 
     public Map<String, Object> create() {
         final Map<String, Object> valueMap = new HashMap<>()
+        uuid = java.util.UUID.randomUUID().toString()
+        valueMap.put(UUID, uuid)
         update(valueMap)
         return valueMap
     }
 
-    public void update(Map<String, Object> valueMap) {
-        if (uuid) valueMap.put(UUID, uuid)
+    public void update(final Map<String, Object> valueMap) {
+        uuid = valueMap.get(UUID)
         if (firstName) valueMap.put(FIRST_NAME, firstName)
         if (lastName) valueMap.put(LAST_NAME, lastName)
         if (email) valueMap.put(EMAIL, email)

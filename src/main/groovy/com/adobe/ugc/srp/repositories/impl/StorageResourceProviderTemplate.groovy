@@ -7,10 +7,8 @@ import org.apache.sling.api.resource.Resource
 import org.apache.sling.api.resource.ResourceResolver
 import org.apache.sling.api.resource.ResourceResolverFactory
 
-import javax.annotation.Nonnull
-
 @CompileStatic
-public abstract class SocialResourceProviderTemplate {
+public abstract class StorageResourceProviderTemplate {
     protected final static String BASE_PATH = "/content/usergenerated/asi/mongo"
 
     /**

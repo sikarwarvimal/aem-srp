@@ -35,11 +35,14 @@ class StorageResourceProviderServlet extends SlingSafeMethodsServlet {
                 final String emailId = request.getParameter("email") as String
                 try {
                     final CustomerEntity customerEntity = customerRepository.find(emailId)
-                    response.getWriter().println(new JsonBuilder(customerEntity).toString())
+                    if(customerEntity) {
+                        jsonObject = new JSONObject(new JsonBuilder(customerEntity).toString())
+                    } else {
+                        jsonObject.put("Error Message", "Could not able to find customer for email id: ${emailId}")
+                    }
                 } catch (RepositoryException | Exception e) {
                     log.error("Failed to find Customer", e)
-                    jsonObject.put("Error Message", "Count not able to find customer for email id: ${emailId}")
-                    response.writer.write(jsonObject.toString())
+                    jsonObject.put("Error Message", "Could not able to find customer for email id: ${emailId}")
                 }
                 break
             case "save":
@@ -50,26 +53,28 @@ class StorageResourceProviderServlet extends SlingSafeMethodsServlet {
                     customerEntity.email = request.getParameter("email") as String
                     customerEntity.password = request.getParameter("password") as String
                     customerRepository.saveOrUpdate(customerEntity);
-                    response.getWriter().println(new JsonBuilder(customerEntity).toString())
+                    jsonObject = new JSONObject(new JsonBuilder(customerEntity).toString())
                 } catch (RepositoryException | Exception e) {
                     log.error("Failed to Save Customer", e)
-                    jsonObject.put("Error Message", "Count not able to Save the customer")
-                    response.writer.write(jsonObject.toString())
+                    jsonObject.put("Error Message", "Could not able to Save the customer")
                 }
                 break
             case "delete":
                 final String emailId = request.getParameter("email") as String
                 try {
                     customerRepository.delete(emailId)
-                    response.getWriter().println("<h1>Customer deleted: ${emailId}</h1>")
+                    jsonObject.put("Success Message", "Customer deleted: ${emailId}")
                 } catch (RepositoryException | Exception e) {
                     log.error("Failed to Delete Customer", e)
-                    jsonObject.put("Error Message", "Count not able to Delete the customer for email id: ${emailId}")
-                    response.writer.write(jsonObject.toString())
+                    jsonObject.put("Error Message", "Could not able to Delete the customer for email id: ${emailId}")
                 }
                 break
             default:
-                response.getWriter().println("<h1>Please select an action</h1>")
+                jsonObject.put("Error Message", "Please select an action")
+                jsonObject.put("find action", "action=find&email=vimal@test.com")
+                jsonObject.put("save action", "action=save&firstName=Vimal&lastName=Kumar&email=vimal@test.com")
+                jsonObject.put("delete action", "action=delete&email=vimal@test.com")
         }
+        response.writer.write(jsonObject.toString())
     }
 }
