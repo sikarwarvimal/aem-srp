@@ -28,10 +28,10 @@ class CustomerEntity {
 
     public void update(final Map<String, Object> valueMap) {
         uuid = valueMap.get(UUID)
-        if (firstName) valueMap.put(FIRST_NAME, firstName)
-        if (lastName) valueMap.put(LAST_NAME, lastName)
-        if (email) valueMap.put(EMAIL, email)
-        if (password) valueMap.put(PASSWORD, password)
+        if (firstName != valueMap.get(FIRST_NAME)) valueMap.put(FIRST_NAME, firstName)
+        if (lastName != valueMap.get(LAST_NAME)) valueMap.put(LAST_NAME, lastName)
+        if (email != valueMap.get(EMAIL)) valueMap.put(EMAIL, email)
+        if (password != valueMap.get(PASSWORD)) valueMap.put(PASSWORD, password)
     }
 
     public void populate(final ValueMap valueMap) {
